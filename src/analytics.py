@@ -60,7 +60,11 @@ def generate_risk_alerts(df: pd.DataFrame, metrics: dict) -> list[str]:
         )
     return alerts
 
-def liquidity_forecast(df: pd.DataFrame, forecast_days: int = 30) -> pd.DataFrame:
+def liquidity_forecast(
+    df: pd.DataFrame,
+    starting_balance: float,
+    forecast_days: int = 30,
+) -> pd.DataFrame:
     forecast_df = df.copy()
     daily_cash_flow = (
         forecast_df.groupby("date", as_index=False)["amount"]
@@ -69,9 +73,8 @@ def liquidity_forecast(df: pd.DataFrame, forecast_days: int = 30) -> pd.DataFram
     )
     average_daily_cash_flow = daily_cash_flow["amount"].mean()
     latest_date = daily_cash_flow["date"].max()
-    current_balance = daily_cash_flow["amount"].sum()
     future_rows = []
-    projected_balance = current_balance
+    projected_balance = starting_balance
     for i in range(1, forecast_days + 1):
         future_date = latest_date + timedelta(days=i)
         projected_balance += average_daily_cash_flow
@@ -100,3 +103,28 @@ def apply_what_if_expense(
         - expense_amount
     )
     return scenario_df
+
+def monthly_category_trends(df: pd.DataFrame) -> pd.DataFrame:
+    expenses = df[df["amount"] < 0].copy()
+    expenses["month"] = expenses["date"].dt.to_period("M").astype(str)
+    expenses["expense_amount"] = expenses["amount"].abs()
+    monthly_category = (
+        expenses.groupby(["month", "category"], as_index=False)["expense_amount"]
+        .sum()
+        .sort_values("month")
+    )
+    return monthly_category
+
+
+def cumulative_balance(df: pd.DataFrame, starting_balance: float) -> pd.DataFrame:
+    balance_df = df.copy()
+    balance_df = balance_df.sort_values("date")
+    daily_cash_flow = (
+        balance_df.groupby("date", as_index=False)["amount"]
+        .sum()
+        .sort_values("date")
+    )
+    daily_cash_flow["cumulative_balance"] = (
+        starting_balance + daily_cash_flow["amount"].cumsum()
+    )
+    return daily_cash_flow

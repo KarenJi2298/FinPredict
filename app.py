@@ -8,7 +8,9 @@ from src.analytics import (
     monthly_burn_rate,
     generate_risk_alerts,
     liquidity_forecast,
-    apply_what_if_expense
+    apply_what_if_expense,
+    monthly_category_trends,
+    cumulative_balance
 )
 from src.categorization import apply_auto_categorization
 
@@ -50,6 +52,7 @@ if uploaded_file is not None:
             col3.metric("Net Cash Flow", f"${metrics['net_cash_flow']:,.2f}")
             col4.metric("Transactions", metrics["transaction_count"])
 
+            ####### Spending by Category #######
             category_summary = spending_by_category(cleaned_df)
             st.subheader("Spending by Category")
             if category_summary.empty:
@@ -61,7 +64,41 @@ if uploaded_file is not None:
                     y="amount"
                 )
                 st.dataframe(category_summary)
-            
+
+            ####### Charts #######
+            st.subheader("Spending Mix")
+            if category_summary.empty:
+                st.info("No expense data available for spending mix.")
+            else:
+                st.plotly_chart(
+                    {
+                        "data": [
+                            {
+                                "labels": category_summary["category"],
+                                "values": category_summary["amount"],
+                                "type": "pie",
+                                "hole": 0.35,
+                            }
+                        ],
+                        "layout": {
+                            "title": "Expense Distribution by Category"
+                        },
+                    },
+                    use_container_width=True,
+                )
+
+            monthly_category_df = monthly_category_trends(cleaned_df)
+
+            st.subheader("Stacked Monthly Spending Trends")
+            if monthly_category_df.empty:
+                st.info("No expense data available for monthly category trends.")
+            else:
+                st.bar_chart(
+                    monthly_category_df,
+                    x="month",
+                    y="expense_amount",
+                    color="category",
+                )
             ####### Burn Rate Analysis #######
             burn_rate_df = monthly_burn_rate(cleaned_df)
             st.subheader("Monthly Burn Rate")
@@ -81,7 +118,23 @@ if uploaded_file is not None:
                 st.success("No financial risk alerts detected.")
 
             ####### Liquidity Forecast #######
-            forecast_df = liquidity_forecast(cleaned_df)
+            st.subheader("Forecast Configuration")
+
+            starting_balance = st.number_input(
+                "Current account balance",
+                min_value=0.0,
+                value=5000.0,
+                step=100.0,
+            )
+
+            st.caption(
+                "Forecasts are generated using historical average daily cash flow trends."
+            )
+
+            forecast_df = liquidity_forecast(
+                cleaned_df,
+                starting_balance=starting_balance,
+            )
             st.subheader("30-Day Liquidity Forecast")
             st.line_chart(
                 forecast_df,
@@ -90,6 +143,21 @@ if uploaded_file is not None:
             )
             st.dataframe(forecast_df)
 
+            historical_balance_df = cumulative_balance(
+                cleaned_df,
+                starting_balance=starting_balance,
+            )
+
+            st.subheader("Historical Cumulative Balance")
+
+            if historical_balance_df.empty:
+                st.info("No transaction data available for cumulative balance.")
+            else:
+                st.line_chart(
+                    historical_balance_df,
+                    x="date",
+                    y="cumulative_balance",
+                )
             ####### What-If Scenario Analysis #######
             st.subheader("What-If Simulator")
             expense_amount = st.number_input(
