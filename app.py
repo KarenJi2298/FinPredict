@@ -2,7 +2,11 @@ import pandas as pd
 import streamlit as st
 
 from src.ingestion import clean_transactions, validate_required_columns
-from src.analytics import calculate_cash_flow_metrics, spending_by_category
+from src.analytics import (
+    calculate_cash_flow_metrics,
+    spending_by_category,
+    monthly_burn_rate
+)
 from src.categorization import apply_auto_categorization
 
 st.set_page_config(page_title="FinPredict", layout="wide")
@@ -54,6 +58,14 @@ if uploaded_file is not None:
                     y="amount"
                 )
                 st.dataframe(category_summary)
+            
+            burn_rate_df = monthly_burn_rate(cleaned_df)
+            st.subheader("Monthly Burn Rate")
+            if burn_rate_df.empty:
+                st.info("No expense transactions found for burn-rate analysis.")
+            else:
+                st.line_chart(burn_rate_df, x="month", y="burn_rate")
+                st.dataframe(burn_rate_df)
 
             st.success("File loaded successfully.")
     except Exception as e:

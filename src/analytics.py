@@ -22,3 +22,18 @@ def spending_by_category(df: pd.DataFrame) -> pd.DataFrame:
     )
     category_summary["amount"] = category_summary["amount"].abs()
     return category_summary
+
+def monthly_burn_rate(df: pd.DataFrame) -> pd.DataFrame:
+    expenses = df[df["amount"] < 0].copy()
+
+    expenses["month"] = expenses["date"].dt.to_period("M").astype(str)
+
+    monthly_summary = (
+        expenses.groupby("month", as_index=False)["amount"]
+        .sum()
+        .sort_values("month")
+    )
+
+    monthly_summary["burn_rate"] = monthly_summary["amount"].abs()
+
+    return monthly_summary[["month", "burn_rate"]]
