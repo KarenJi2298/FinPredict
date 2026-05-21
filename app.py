@@ -5,7 +5,9 @@ from src.ingestion import clean_transactions, validate_required_columns
 from src.analytics import (
     calculate_cash_flow_metrics,
     spending_by_category,
-    monthly_burn_rate
+    monthly_burn_rate,
+    generate_risk_alerts,
+    liquidity_forecast
 )
 from src.categorization import apply_auto_categorization
 
@@ -59,6 +61,7 @@ if uploaded_file is not None:
                 )
                 st.dataframe(category_summary)
             
+            ####### Burn Rate Analysis #######
             burn_rate_df = monthly_burn_rate(cleaned_df)
             st.subheader("Monthly Burn Rate")
             if burn_rate_df.empty:
@@ -66,6 +69,25 @@ if uploaded_file is not None:
             else:
                 st.line_chart(burn_rate_df, x="month", y="burn_rate")
                 st.dataframe(burn_rate_df)
+
+            ####### Risk Alerts #######
+            alerts = generate_risk_alerts(cleaned_df, metrics)
+            st.subheader("Risk Alerts") 
+            if alerts:
+                for alert in alerts:
+                    st.warning(alert)
+            else:
+                st.success("No financial risk alerts detected.")
+
+            ####### Liquidity Forecast #######
+            forecast_df = liquidity_forecast(cleaned_df)
+            st.subheader("30-Day Liquidity Forecast")
+            st.line_chart(
+                forecast_df,
+                x="date",
+                y="projected_balance"
+            )
+            st.dataframe(forecast_df)
 
             st.success("File loaded successfully.")
     except Exception as e:
