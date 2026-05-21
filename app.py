@@ -19,7 +19,17 @@ st.set_page_config(page_title="FinPredict", layout="wide")
 st.title("FinPredict 💰")
 st.write("Upload a transaction file to begin analyzing your spending and liquidity.")
 
-uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+st.sidebar.title("FinPredict")
+
+st.sidebar.markdown(
+    """
+    Intelligent Expense Analytics &
+    Liquidity Forecasting Platform
+    """
+)
+
+st.sidebar.header("Data Upload")
+uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"])
 
 if uploaded_file is not None:
     try:
@@ -64,7 +74,7 @@ if uploaded_file is not None:
                     y="amount"
                 )
                 st.dataframe(category_summary)
-
+            
             ####### Charts #######
             st.subheader("Spending Mix")
             if category_summary.empty:
@@ -116,11 +126,13 @@ if uploaded_file is not None:
                     st.warning(alert)
             else:
                 st.success("No financial risk alerts detected.")
+            st.sidebar.divider()
 
             ####### Liquidity Forecast #######
+            st.sidebar.header("Forecast Settings")
             st.subheader("Forecast Configuration")
 
-            starting_balance = st.number_input(
+            starting_balance = st.sidebar.number_input(
                 "Current account balance",
                 min_value=0.0,
                 value=5000.0,
@@ -158,15 +170,16 @@ if uploaded_file is not None:
                     x="date",
                     y="cumulative_balance",
                 )
+            st.sidebar.divider()
             ####### What-If Scenario Analysis #######
-            st.subheader("What-If Simulator")
-            expense_amount = st.number_input(
+            st.sidebar.header("What-If Scenario")
+            expense_amount = st.sidebar.number_input(
                 "Hypothetical expense amount",
                 min_value=0.0,
                 value=500.0,
                 step=100.0,
             )
-            expense_date = st.date_input(
+            expense_date = st.sidebar.date_input(
                 "Hypothetical expense date",
                 value=forecast_df["date"].min().date(),
             )
