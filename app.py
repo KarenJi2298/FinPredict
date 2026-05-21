@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from src.ingestion import clean_transactions, validate_required_columns
-from src.analytics import calculate_cash_flow_metrics
+from src.analytics import calculate_cash_flow_metrics, spending_by_category
 
 st.set_page_config(page_title="FinPredict", layout="wide")
 
@@ -39,6 +39,18 @@ if uploaded_file is not None:
             col2.metric("Expenses", f"${metrics['expenses']:,.2f}")
             col3.metric("Net Cash Flow", f"${metrics['net_cash_flow']:,.2f}")
             col4.metric("Transactions", metrics["transaction_count"])
+
+            category_summary = spending_by_category(cleaned_df)
+            st.subheader("Spending by Category")
+            if category_summary.empty:
+                st.info("No expense transactions found.")
+            else:
+                st.bar_chart(
+                    category_summary,
+                    x="category",
+                    y="amount"
+                )
+                st.dataframe(category_summary)
 
             st.success("File loaded successfully.")
     except Exception as e:
