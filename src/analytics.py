@@ -81,3 +81,22 @@ def liquidity_forecast(df: pd.DataFrame, forecast_days: int = 30) -> pd.DataFram
         })
     future_df = pd.DataFrame(future_rows)
     return future_df
+
+def apply_what_if_expense(
+    forecast_df: pd.DataFrame,
+    expense_amount: float,
+    expense_date,
+) -> pd.DataFrame:
+    scenario_df = forecast_df.copy()
+    scenario_df["scenario_balance"] = scenario_df["projected_balance"]
+    scenario_df.loc[
+        scenario_df["date"] >= pd.to_datetime(expense_date),
+        "scenario_balance",
+    ] = (
+        scenario_df.loc[
+            scenario_df["date"] >= pd.to_datetime(expense_date),
+            "scenario_balance",
+        ]
+        - expense_amount
+    )
+    return scenario_df

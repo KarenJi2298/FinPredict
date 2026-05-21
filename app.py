@@ -7,7 +7,8 @@ from src.analytics import (
     spending_by_category,
     monthly_burn_rate,
     generate_risk_alerts,
-    liquidity_forecast
+    liquidity_forecast,
+    apply_what_if_expense
 )
 from src.categorization import apply_auto_categorization
 
@@ -88,6 +89,30 @@ if uploaded_file is not None:
                 y="projected_balance"
             )
             st.dataframe(forecast_df)
+
+            ####### What-If Scenario Analysis #######
+            st.subheader("What-If Simulator")
+            expense_amount = st.number_input(
+                "Hypothetical expense amount",
+                min_value=0.0,
+                value=500.0,
+                step=100.0,
+            )
+            expense_date = st.date_input(
+                "Hypothetical expense date",
+                value=forecast_df["date"].min().date(),
+            )
+            scenario_df = apply_what_if_expense(
+                forecast_df,
+                expense_amount=expense_amount,
+                expense_date=expense_date,
+            )
+            st.line_chart(
+                scenario_df,
+                x="date",
+                y=["projected_balance", "scenario_balance"],
+            )
+            st.dataframe(scenario_df)
 
             st.success("File loaded successfully.")
     except Exception as e:
