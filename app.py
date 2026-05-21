@@ -3,6 +3,7 @@ import streamlit as st
 
 from src.ingestion import clean_transactions, validate_required_columns
 from src.analytics import calculate_cash_flow_metrics, spending_by_category
+from src.categorization import apply_auto_categorization
 
 st.set_page_config(page_title="FinPredict", layout="wide")
 
@@ -19,6 +20,8 @@ if uploaded_file is not None:
         st.dataframe(raw_df)
 
         cleaned_df = clean_transactions(raw_df)
+        cleaned_df = apply_auto_categorization(cleaned_df)
+        cleaned_df["category"] = cleaned_df["final_category"]
         missing_columns = validate_required_columns(cleaned_df)
 
         if missing_columns:
